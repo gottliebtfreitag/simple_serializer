@@ -12,7 +12,7 @@ OBJ_CPY ?= $(CROSS_COMPILE_PREFIX)objcopy
 SRC_FOLDERS = ./
 LIBS = c pthread atomic yaml-cpp
 LIB_PATHS =
-INCLUDES = src/ \
+INCLUDES = ./ \
 
 MAP_FILE = $(TARGET).map
 
