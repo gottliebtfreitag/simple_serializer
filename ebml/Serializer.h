@@ -15,7 +15,9 @@ namespace ebml {
 
 using Buffer = std::vector<std::byte>;
 
-template<typename Hasher=detail::Hash>
+namespace detail {
+
+template<typename Hasher>
 struct Serializer {
 private:
 	Buffer buffer;
@@ -106,7 +108,9 @@ public:
 		}
 	}
 };
+}
 
+using Serializer = detail::Serializer<detail::Hash>;
 }
 }
 

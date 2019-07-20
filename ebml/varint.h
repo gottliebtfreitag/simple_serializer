@@ -21,7 +21,9 @@ constexpr std::size_t getSignificantBytes(T val) {
 		}
 		return numBytes;
 	} else {
-		if (val >= 0) {
+		if (val == 0) {
+			return 1;
+		} if (val >= 0) {
 			return getSignificantBytes(static_cast<std::make_unsigned_t<T>>(val));
 		} else {
 			return getSignificantBytes(static_cast<std::make_unsigned_t<T>>(-val * 2 - 1));

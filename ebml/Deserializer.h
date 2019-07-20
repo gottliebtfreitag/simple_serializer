@@ -12,7 +12,10 @@
 namespace serializer {
 namespace ebml {
 
-template<typename Hasher=detail::Hash>
+namespace detail
+{
+
+template<typename Hasher>
 struct Deserializer {
 	using size_t = std::make_signed_t<std::size_t>;
 private:
@@ -57,6 +60,9 @@ public:
 		headerDeser[0x4282] % contentType;
 		if (contentType != "ebml-serializer") {
 			throw std::runtime_error("cannot deserialize stream! wrong document type");
+		}
+		for (auto& child : *childElements) {
+			child.second.autoIdLen = autoIdLen;
 		}
 	}
 
@@ -133,6 +139,10 @@ public:
 		}
 	}
 };
+
+}
+
+using Deserializer = detail::Deserializer<detail::Hash>;
 
 }
 }
