@@ -8,6 +8,8 @@
 #include "serializer/yaml/Serializer.h"
 #include "serializer/yaml/Deserializer.h"
 
+#include "serializer/PolymorphConverter.h"
+
 enum class bla {
 	foo,
 	bar
@@ -25,6 +27,40 @@ struct Serializable {
 		serializer["content"] % content;
 	}
 };
+
+struct Base {
+	virtual ~Base() = default;
+	int baseVal {0};
+
+	template<typename Serializer>
+	void serialize(Serializer&& serializer) {
+		serializer["baseVal"] % baseVal;
+	}
+};
+
+struct DerivA : Base {
+	int aVal {1};
+
+	template<typename Serializer>
+	void serialize(Serializer&& serializer) {
+		Base::serialize(std::forward<Serializer>(serializer));
+		serializer["aVal"] % aVal;
+	}
+};
+
+struct DerivB : Base {
+	int bVal {2};
+
+	template<typename Serializer>
+	void serialize(Serializer&& serializer) {
+		Base::serialize(std::forward<Serializer>(serializer));
+		serializer["bVal"] % bVal;
+	}
+};
+
+serializer::Factory<Base, DerivA> facA{"DerivA"};
+serializer::Factory<Base, DerivB> facB{"DerivB"};
+
 
 void prettyPrintBuffer(serializer::ebml::Buffer const& buffer) {
 	int counter {0};
@@ -53,25 +89,34 @@ void prettyPrintBuffer(serializer::ebml::Buffer const& buffer) {
 
 void test_ebml() {
 	serializer::ebml::Serializer serializer;
+	DerivA a;
+	DerivB b;
+	a.aVal = 3;
+	b.bVal = 4;
 
 	std::map<std::string, std::string> map {{"hallo", "welt"}, {"bla", "fasel"}};
 	std::vector<int> vec {1, 0x0100, 0x800000};
+	std::vector<Base*> polyVec {&a, &b};
 
 	Serializable serializable{"Hallo Welt"};
 
-	serializer["map"]     % map;
-	serializer["vec"]     % vec;
-	serializer["segment"] % serializable;
+	serializer["map"]         % map;
+	serializer["vec"]         % vec;
+	serializer["segment"]     % serializable;
+	serializer["polymorphic"] % polyVec;
 
 	serializer::ebml::Deserializer deserializer{serializer.getBuffer().data(), serializer.getBuffer().size()};
 
 	decltype(map) deser_map;
 	decltype(serializable) deser_serializable;
 	decltype(vec) deser_vec;
+	std::vector<std::unique_ptr<Base>> deser_polyVec;
 
-	deserializer["segment"] % deser_serializable;
-	deserializer["map"]     % deser_map;
-	deserializer["vec"]     % deser_vec;
+
+	deserializer["segment"]     % deser_serializable;
+	deserializer["map"]         % deser_map;
+	deserializer["vec"]         % deser_vec;
+	deserializer["polymorphic"] % deser_polyVec;
 
 	if (deser_serializable != serializable) {
 		std::cerr << "something went horribly wrong! \n";
@@ -96,25 +141,34 @@ void test_ebml() {
 
 void test_yaml() {
 	serializer::yaml::Serializer serializer;
+	DerivA a;
+	DerivB b;
+	a.aVal = 3;
+	b.bVal = 4;
 
 	std::map<std::string, std::string> map {{"hallo", "welt"}, {"bla", "fasel"}};
 	std::vector<int> vec {1, 0x0100, 0x800000};
-
+	
+	std::vector<Base*> polyVec {&a, &b};
+	
 	Serializable serializable{"Hallo Welt"};
 
 	serializer["map"]     % map;
 	serializer["vec"]     % vec;
 	serializer["segment"] % serializable;
+	serializer["polymorphic"] % polyVec;
 
 	serializer::yaml::Deserializer deserializer{serializer.getNode()};
 
 	decltype(map) deser_map;
 	decltype(serializable) deser_serializable;
 	decltype(vec) deser_vec;
+	std::vector<std::unique_ptr<Base>> deser_polyVec;
 
-	deserializer["segment"] % deser_serializable;
-	deserializer["map"]     % deser_map;
-	deserializer["vec"]     % deser_vec;
+	deserializer["segment"]     % deser_serializable;
+	deserializer["map"]         % deser_map;
+	deserializer["vec"]         % deser_vec;
+	deserializer["polymorphic"] % deser_polyVec;
 
 	if (deser_serializable != serializable) {
 		std::cerr << "something went horribly wrong! \n";
