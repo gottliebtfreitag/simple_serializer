@@ -78,7 +78,7 @@ public:
 	auto getBuffer() const -> decltype(buffer) const& { return buffer; }
 
 	template<typename T>
-	void operator%(T t) {
+	void operator%(T& t) {
 		using value_type = std::remove_reference_t<std::remove_cv_t<T>>;
 		if constexpr (std::is_same_v<value_type, std::string> or std::is_same_v<value_type, std::string_view>) {
 			transform(begin(t), end(t), std::back_inserter(buffer), [](auto c) {return std::byte(c);});
