@@ -7,6 +7,7 @@
 #include "serializer/Converter.h"
 #include "serializer/traits.h"
 
+#include "hasher.h"
 #include "varint.h"
 
 namespace serializer {
