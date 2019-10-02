@@ -47,10 +47,9 @@ struct ContainerConverter {
 	}
 	template<typename Deserializer>
 	void deserialize(Deserializer& adapter, value_type& x) {
+		using inner_type = typename value_type::value_type;
 		x.clear();
-		adapter.deserializeSequence([&x](T& v) {
-			x.emplace(std::move(v));
-		});
+		adapter. template deserializeSequence<inner_type>([&x](inner_type v) { x.emplace(std::move(v)); });
 	}
 };
 
