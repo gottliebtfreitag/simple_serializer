@@ -116,7 +116,7 @@ struct Converter<std::unique_ptr<Base>, typename std::enable_if<std::is_polymorp
 	using value_type = std::unique_ptr<Base>;
     
 	template<typename Serializer>
-	void serialize(Serializer& adapter, value_type const& x) {
+	void serialize(Serializer& adapter, value_type& x) {
         auto const& collection = FactoryCollection<Base>::get();
 		auto const& info = collection.getFactory(typeid(*x));
 
@@ -149,7 +149,7 @@ struct Converter<Base*, typename std::enable_if<std::is_polymorphic_v<Base>>::ty
 	using value_type = Base*;
     
 	template<typename Serializer>
-	void serialize(Serializer& adapter, value_type const& x) {
+	void serialize(Serializer& adapter, value_type& x) {
         auto const& collection = FactoryCollection<Base>::get();
 		auto const& info = collection.getFactory(typeid(*x));
 
