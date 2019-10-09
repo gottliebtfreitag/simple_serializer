@@ -2,6 +2,9 @@
 #include "demangle.h"
 
 
+namespace serializer {
+
+
 std::string demangle(std::type_info const& ti) {
 	int status;
 	char* name_ = abi::__cxa_demangle(ti.name(), 0, 0, &status);
@@ -11,4 +14,6 @@ std::string demangle(std::type_info const& ti) {
 	std::string demangledName{ name_ };
 	free(name_); // need to use free here :/
 	return demangledName;
+}
+
 }
