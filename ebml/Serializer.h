@@ -38,15 +38,11 @@ public:
 		if (not parent) {
 			// if this is the root element we need to write an ebml header
 			auto headerSer = (*this)[0x1A45DFA3];
-			int version{1};
-            int reader_version{1};
-            int max_size_len{8};
-            std::string name{"ebml-serializer"};
-			headerSer[0x4286] % version; // ebml version
-			headerSer[0x42f7] % reader_version; // ebml reader version
+			headerSer[0x4286] % 1; // ebml version
+			headerSer[0x42f7] % 1; // ebml reader version
 			headerSer[0x42f2] % autoIdLen; // maximum id-length
-			headerSer[0x42f3] % max_size_len; // maximum size-length
-			headerSer[0x4282] % name; // name
+			headerSer[0x42f3] % 8; // maximum size-length
+			headerSer[0x4282] % std::string("ebml-serializer"); // name
 		}
 	}
 
@@ -84,8 +80,8 @@ public:
 	auto getBuffer() const -> decltype(buffer) const& { return buffer; }
 
 	template<typename T>
-	void operator%(T& t) {
-		using value_type = std::remove_reference_t<std::remove_cv_t<T>>;
+	void operator%(T&& t) {
+		using value_type = std::remove_cv_t<std::remove_reference_t<T>>;
 		if constexpr (std::is_same_v<value_type, std::string> or std::is_same_v<value_type, std::string_view>) {
 			transform(begin(t), end(t), std::back_inserter(buffer), [](auto c) {return std::byte(c);});
 		} else if constexpr (std::is_integral_v<value_type>) {
