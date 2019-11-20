@@ -26,8 +26,8 @@ public:
 	}
 
 	template<typename T>
-	void operator%(T& t) {
-		using value_type = std::remove_cv_t<T>;
+	void operator%(T&& t) {
+		using value_type = std::remove_cv_t<std::remove_reference_t<T>>;
 
 		if constexpr (traits::has_serialize_function_v<value_type, decltype(*this)>) {
 			t.serialize(*this);
