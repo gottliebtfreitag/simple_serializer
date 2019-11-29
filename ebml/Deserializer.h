@@ -106,7 +106,11 @@ public:
 		if constexpr (std::is_same_v<value_type, std::string>) {
 			t = value_type(reinterpret_cast<const char*>(buffer), static_cast<std::size_t>(size));
 		} else if constexpr (std::is_integral_v<value_type>) {
-			t = 0;
+            if constexpr (std::is_signed_v<value_type>) {
+                t = static_cast<int>(buffer[0]) & 0x80 ? static_cast<value_type>(std::make_unsigned_t<value_type>(-1)) : 0;
+            } else {
+                t = 0;
+            }
 			for (auto i{0U}; i < size; ++i) {
 				t = (t << 8) | static_cast<value_type>(buffer[i]);
 			}
