@@ -48,7 +48,7 @@ std::uint64_t varintToNumber(Varint const& vint) {
 	}
 
 	std::byte head = vint[0];
-	auto addBytesToRead = sizeof(head) * 8;
+	unsigned int addBytesToRead = 8;
 	while (addBytesToRead--) {
 		if (head >> (8-addBytesToRead) == std::byte(0x00)) {
 			break;
@@ -57,8 +57,8 @@ std::uint64_t varintToNumber(Varint const& vint) {
 	if (vint.size() != 1 + addBytesToRead) {
 		throw std::runtime_error("invalid varint");
 	}
-	std::uint64_t ret{(static_cast<std::uint64_t>(head)&((1<<(7-addBytesToRead))-1))<<(addBytesToRead*8)};
-	for (auto i{1U}; i < addBytesToRead; ++i) {
+	std::uint64_t ret{(static_cast<std::uint64_t>(head)&((1<<(7-addBytesToRead))-1))};
+	for (auto i{1U}; i <= addBytesToRead; ++i) {
 		ret = (ret << 8) | static_cast<std::uint64_t>(vint[i]);
 	}
 	return ret;
