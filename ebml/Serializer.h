@@ -85,6 +85,10 @@ public:
 
 	template<typename T>
 	void operator%(T&& t) {
+        if (not id) {
+            throw std::runtime_error("cannot serialize into an EBML node without an ID");
+        }
+        buffer.clear();
 		using value_type = std::remove_cv_t<std::remove_reference_t<T>>;
 		if constexpr (std::is_same_v<value_type, std::string> or std::is_same_v<value_type, std::string_view>) {
 			transform(begin(t), end(t), std::back_inserter(buffer), [](auto c) {return std::byte(c);});
