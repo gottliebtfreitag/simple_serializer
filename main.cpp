@@ -95,7 +95,7 @@ void test_ebml() {
 	b.bVal = 4;
 
 	std::map<std::string, std::string> map {{"hallo", "welt"}, {"bla", "fasel"}};
-	std::vector<int> vec {1, 0x0100, 0x800000};
+	std::vector<int> vec {0, 1, -1, -2, -127, -128, -129, 0x0100, 0x800000};
 	std::vector<Base*> polyVec {&a, &b};
 
 	Serializable serializable{"Hallo Welt"};
@@ -147,7 +147,7 @@ void test_yaml() {
 	b.bVal = 4;
 
 	std::map<std::string, std::string> map {{"hallo", "welt"}, {"bla", "fasel"}};
-	std::vector<int> vec {1, 0x0100, 0x800000};
+	std::vector<int> vec {0, 1, -1, -2, -127, -128, -129, 0x0100, 0x800000};
 	
 	std::vector<Base*> polyVec {&a, &b};
 	
