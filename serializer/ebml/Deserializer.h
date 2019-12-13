@@ -119,9 +119,14 @@ public:
 			t = value_type(reinterpret_cast<const char*>(buffer), static_cast<std::size_t>(size));
 		} else if constexpr (std::is_integral_v<value_type>) {
 			t = 0;
-			for (auto i{0U}; i < size; ++i) {
-				t = (t << 8) | static_cast<value_type>(buffer[i]);
-			}
+            for (auto i{0U}; i < size; ++i) {
+                t = (t << 8) | static_cast<value_type>(buffer[i]);
+            }
+            if constexpr (not std::is_unsigned_v<value_type>) {
+                if (size and (buffer[0] & std::byte{0x80}) != std::byte{0x00}) {
+                    t |= ~((1 << (8*size)) - 1);
+                }
+            }
 		} else if constexpr (std::is_enum_v<value_type>) {
 			(*this) % static_cast<std::underlying_type_t<value_type>>(t);
 		} else if constexpr (traits::has_serialize_function_v<value_type, decltype(*this)>) {

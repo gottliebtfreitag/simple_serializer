@@ -34,7 +34,15 @@ constexpr static std::size_t getOctetLength(T val) {
             }
             return 8;
         } else {
-            return getOctetLength(static_cast<std::make_unsigned_t<T>>((~val) + 1));
+            val = ~val; 
+            T ref = 0x7f;
+            for (int i{1}; i < 9; ++i) {
+                if (val <= ref) {
+                    return i;
+                }
+                ref = (ref << 8) + 0xff;
+            }
+            return 8;
         }
     }
 }
