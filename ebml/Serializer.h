@@ -35,6 +35,9 @@ public:
 	Serializer(std::size_t _autoIdLen=4)
 		: autoIdLen{_autoIdLen}
 	{
+        if (_autoIdLen > 8) {
+            throw std::invalid_argument("ebml allows for ids to be of length 8 maximum!");
+        }
         // if this is the root element we need to write an ebml header
         auto headerSer = (*this)[0x0A45DFA3];
         headerSer[0x0286] % 1; // ebml version
@@ -61,7 +64,7 @@ public:
 	{
 		if (parent and id) {
 			parent->write_raw(*id);
-			parent->write_raw(Varint{buffer.size()});
+			parent->write_raw(VarLen{buffer.size()});
 			parent->write_raw(buffer);
 		}
 	}
@@ -87,10 +90,10 @@ public:
 			transform(begin(t), end(t), std::back_inserter(buffer), [](auto c) {return std::byte(c);});
 		} else if constexpr (std::is_integral_v<value_type>) {
 			auto numBytes = detail::getOctetLength(t);
-			do {
+			while (numBytes) {
 				--numBytes;
 				buffer.emplace_back(std::byte((t >> (8*numBytes)) & 0xff));
-			} while (numBytes);
+			};
 		} else if constexpr (std::is_enum_v<value_type>) {
 			(*this) % static_cast<std::underlying_type_t<value_type>>(t);
 		} else if constexpr (traits::has_serialize_function_v<value_type, decltype(*this)>) {

@@ -32,11 +32,12 @@ private:
 	using ChildInfo = std::pair<Varint, Deserializer>;
 	std::optional<std::vector<ChildInfo>> childElements;
 
+    template<typename V>
     Varint readVarint(std::byte const*& b, std::byte const*& endb) {
         if (b > endb) {
             throw std::range_error("not enough bytes to deserialize varint");
         }
-        auto vint = Varint(b, endb-b);
+        auto vint = V(b, endb-b);
         b += vint.size();
         return vint;
     }
@@ -47,8 +48,16 @@ private:
 			auto b = buffer;
 			auto endB = buffer + size;
 			while (b < endB) {
-				auto childID = readVarint(b, endB);
-				auto contentLen = readVarint(b, endB);
+				auto childID = Varint(b, endB-b);
+                b += childID.size();
+                if (b >= endB) {
+                    throw std::runtime_error("invalid ebml stream");
+                }
+				auto contentLen = VarLen(b, endB-b);
+                b += contentLen.size();
+                if (b > endB or static_cast<std::size_t>(endB-b) < contentLen.value()) {
+                    throw std::runtime_error("invalid ebml stream");
+                }
 				children.emplace_back(childID, Deserializer(b, contentLen, autoIdLen));
 				b += contentLen;
 			}
