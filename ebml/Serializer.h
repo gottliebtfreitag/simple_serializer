@@ -23,58 +23,59 @@ private:
 	Buffer buffer;
 	Serializer* parent {nullptr};
 	std::size_t autoIdLen;
-	bool finalized {false};
-	Varint id;
+	std::optional<Varint> id;
 
-	void write_raw(std::vector<std::byte> const& data) {
-		copy(begin(data), end(data), back_inserter(buffer));
+    template<typename T>
+	void write_raw(T const& t) {
+		std::copy(std::begin(t), std::end(t), std::back_inserter(buffer));
 	}
 
 public:
-	Serializer(std::size_t _autoIdLen=4, Serializer* _parent=nullptr)
+
+	Serializer(std::size_t _autoIdLen=4)
+		: autoIdLen{_autoIdLen}
+	{
+        // if this is the root element we need to write an ebml header
+        auto headerSer = (*this)[0x0A45DFA3];
+        headerSer[0x0286] % 1; // ebml version
+        headerSer[0x02f7] % 1; // ebml reader version
+        headerSer[0x02f2] % autoIdLen; // maximum id-length
+        headerSer[0x02f3] % 8; // maximum size-length
+        headerSer[0x0282] % std::string("ebml-serializer"); // name
+	}
+
+	Serializer(std::size_t _autoIdLen, Serializer* _parent)
 		: parent{_parent}
 		, autoIdLen{_autoIdLen}
 	{
 		if (not parent) {
-			// if this is the root element we need to write an ebml header
-			auto headerSer = (*this)[0x1A45DFA3];
-			headerSer[0x4286] % 1; // ebml version
-			headerSer[0x42f7] % 1; // ebml reader version
-			headerSer[0x42f2] % autoIdLen; // maximum id-length
-			headerSer[0x42f3] % 8; // maximum size-length
-			headerSer[0x4282] % std::string("ebml-serializer"); // name
+            throw std::invalid_argument("need a parent serializer");
 		}
 	}
 
-	Serializer(Varint const& _id, std::size_t _autoIdLen=4, Serializer* _parent=nullptr)
+	Serializer(Varint const& _id, std::size_t _autoIdLen, Serializer* _parent)
 		: Serializer(_autoIdLen, _parent)
 	{ id = _id; }
 
 	~Serializer()
 	{
-		if (parent) {
-			parent->write_raw(id);
-			parent->write_raw(toVarint(buffer.size()));
+		if (parent and id) {
+			parent->write_raw(*id);
+			parent->write_raw(Varint{buffer.size()});
 			parent->write_raw(buffer);
 		}
 	}
 
+	Serializer operator[](Varint const& id) {
+		return Serializer(id, autoIdLen, this);
+	}
+
 	Serializer operator[](std::uint64_t id) {
-		auto numBytes = detail::getSignificantBytes(id);
-		Varint vint;
-		do {
-			--numBytes;
-			vint.emplace_back(std::byte((id >> (8*numBytes)) & 0xff));
-		} while (numBytes);
-		return (*this)[vint];
+		return (*this)[Varint{id}];
 	}
 
 	Serializer operator[](std::string_view const& name) {
 		return (*this)[genID<Hasher>(name, autoIdLen)];
-	}
-
-	Serializer operator[](Varint const& id) {
-		return Serializer(id, autoIdLen, this);
 	}
 
 	auto getBuffer() const -> decltype(buffer) const& { return buffer; }
@@ -85,7 +86,7 @@ public:
 		if constexpr (std::is_same_v<value_type, std::string> or std::is_same_v<value_type, std::string_view>) {
 			transform(begin(t), end(t), std::back_inserter(buffer), [](auto c) {return std::byte(c);});
 		} else if constexpr (std::is_integral_v<value_type>) {
-			auto numBytes = detail::getSignificantBytes(t);
+			auto numBytes = detail::getOctetLength(t);
 			do {
 				--numBytes;
 				buffer.emplace_back(std::byte((t >> (8*numBytes)) & 0xff));
@@ -104,7 +105,7 @@ public:
 	template<typename IterT>
 	void serializeSequence(IterT begin, IterT end) {
 		for (; begin != end; std::advance(begin, 1)) {
-			Serializer({std::byte{0x81}}, autoIdLen, this) % *begin;
+			Serializer(Varint{0x01}, autoIdLen, this) % *begin;
 		}
 	}
 };

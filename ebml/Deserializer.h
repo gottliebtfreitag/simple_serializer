@@ -32,15 +32,24 @@ private:
 	using ChildInfo = std::pair<Varint, Deserializer>;
 	std::optional<std::vector<ChildInfo>> childElements;
 
+    Varint readVarint(std::byte const*& b, std::byte const*& endb) {
+        if (b > endb) {
+            throw std::range_error("not enough bytes to deserialize varint");
+        }
+        auto vint = Varint(b, endb-b);
+        b += vint.size();
+        return vint;
+    }
+
 	void populateChildren() {
 		if (not childElements) {
 			std::vector<ChildInfo> children;
 			auto b = buffer;
 			auto endB = buffer + size;
 			while (b < endB) {
-				auto childID = readVarint(b, endB-b); // this moves b
-				auto contentLen = varintToNumber(readVarint(b, endB-b));
-				children.emplace_back(std::move(childID), Deserializer(b, contentLen, autoIdLen));
+				auto childID = readVarint(b, endB);
+				auto contentLen = readVarint(b, endB);
+				children.emplace_back(childID, Deserializer(b, contentLen, autoIdLen));
 				b += contentLen;
 			}
 			childElements = std::move(children);
@@ -52,13 +61,13 @@ public:
 		: buffer{_buffer}, size{static_cast<size_t>(_size)}
 	{
 		// read the header
-		auto headerDeser = (*this)[0x1A45DFA3];
+		auto headerDeser = (*this)[0x0A45DFA3];
 		if (headerDeser.size == -1) {
 			throw std::runtime_error("cannot deserialize stream! there is no header information");
 		}
-		headerDeser[0x42f2] % autoIdLen; // maximum id-length
+		headerDeser[0x02f2] % autoIdLen; // maximum id-length
 		std::string contentType;
-		headerDeser[0x4282] % contentType;
+		headerDeser[0x0282] % contentType;
 		if (contentType != "ebml-serializer") {
 			throw std::runtime_error("cannot deserialize stream! wrong document type");
 		}
@@ -68,13 +77,7 @@ public:
 	}
 
 	Deserializer operator[](std::uint64_t id) {
-		auto numBytes = detail::getSignificantBytes(id);
-		Varint vint;
-		do {
-			--numBytes;
-			vint.emplace_back(std::byte((id >> (8*numBytes)) & 0xff));
-		} while (numBytes);
-		return (*this)[vint];
+		return (*this)[Varint{id}];
 	}
 
 	Deserializer operator[](std::string_view const& name) {
@@ -124,7 +127,7 @@ public:
 	template<typename T, typename ElemCb, typename CountCB=int>
 	void deserializeSequence(ElemCb&& cb, CountCB&& countCB=CountCB{}) {
 		populateChildren();
-		Varint targetId{std::byte{0x81}};
+		Varint targetId{0x01};
 		if constexpr (not std::is_same_v<CountCB, int>) {
 			auto count = std::count_if(begin(*childElements), end(*childElements), [&](auto c) {return c.first == targetId; });
 			countCB(count);
