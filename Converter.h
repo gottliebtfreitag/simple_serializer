@@ -1,17 +1,11 @@
 #pragma once
 
-#include <array>
-#include <list>
-#include <map>
 #include <memory>
+#include <map>
 #include <set>
+#include <vector>
 #include <cstring>
 #include <string>
-#include <type_traits>
-#include <vector>
-#include <map>
-#include <set>
-#include <iostream>
 
 #include "traits.h"
 
