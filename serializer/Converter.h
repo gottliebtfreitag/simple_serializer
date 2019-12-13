@@ -55,12 +55,10 @@ struct ContainerConverter {
 
 }
 
-template<typename T>
-struct Converter<std::vector<T>>       : detail::SequenceContainerConverter<std::vector<T>> {};
-template<typename T>
-struct Converter<std::list<T>>         : detail::SequenceContainerConverter<std::list<T>> {};
-template<typename T>
-struct Converter<std::basic_string<T>> : detail::SequenceContainerConverter<std::list<T>> {};
+template<typename... Ts>
+struct Converter<std::vector<Ts...>>       : detail::SequenceContainerConverter<std::vector<Ts...>> {};
+template<typename... Ts>
+struct Converter<std::basic_string<Ts...>> : detail::SequenceContainerConverter<std::basic_string<Ts...>> {};
 
 template<typename T>
 struct Converter<std::set<T>> : detail::ContainerConverter<std::set<T>> {};
