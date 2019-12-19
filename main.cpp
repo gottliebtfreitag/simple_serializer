@@ -84,6 +84,7 @@ void prettyPrintBuffer(serializer::ebml::Buffer const& buffer) {
 			std::cout << "  ";
 		}
 	}
+    std::cout << std::dec;
 	std::cout << "\n";
 }
 
