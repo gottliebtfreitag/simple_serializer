@@ -23,10 +23,10 @@ struct FactoryBase;
 template<typename Base>
 struct FactoryCollection {
 private:
-    std::map<std::string, FactoryBase<Base> const&> factories;
+    std::unordered_map<std::string, FactoryBase<Base> const&> factories;
 
     using ReverseMappedType = typename std::map<std::string, FactoryBase<Base> const&>::value_type;
-    std::map<std::type_index, ReverseMappedType const*> reverse_lokup;
+    std::unordered_multimap<std::type_index, ReverseMappedType const*> reverse_lokup;
     
 public:
     static FactoryCollection& get() {
@@ -37,7 +37,7 @@ public:
     void addFactory(std::string const& name, FactoryBase<Base> const& factory) {
         auto res = factories.emplace(name, factory);
         if (res.second) {
-            reverse_lokup[factory.getTypeInfo()] = &(*res.first);
+            reverse_lokup.emplace(factory.getTypeInfo(), &(*res.first));
         }
     }
 
