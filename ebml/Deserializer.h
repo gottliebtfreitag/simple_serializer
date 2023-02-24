@@ -17,7 +17,7 @@ namespace detail
 {
 
 template<typename Hasher>
-struct Deserializer {
+struct Deserializer : traits::SerializerTraits<true> {
 	using size_t = std::make_signed_t<std::size_t>;
 private:
 

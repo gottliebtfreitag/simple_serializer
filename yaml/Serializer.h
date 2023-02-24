@@ -11,7 +11,7 @@
 namespace serializer {
 namespace yaml {
 
-struct Serializer {
+struct Serializer : traits::SerializerTraits<false> {
 private:
 	YAML::Node node;
 public:

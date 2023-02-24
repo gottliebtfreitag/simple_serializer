@@ -18,7 +18,7 @@ using Buffer = std::vector<std::byte>;
 namespace detail {
 
 template<typename Hasher>
-struct Serializer {
+struct Serializer: traits::SerializerTraits<false> {
 private:
 	Buffer buffer;
 	Serializer* parent {nullptr};
