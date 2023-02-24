@@ -18,8 +18,9 @@ class Converter;
 
 namespace detail {
 
+
 template<typename T>
-struct SequenceContainerConverter {
+struct FixedSequenceContainerConverter {
 	using value_type = T;
 	template<typename Serializer>
 	void serialize(Serializer& adapter, value_type& x) {
@@ -28,7 +29,19 @@ struct SequenceContainerConverter {
 	template<typename Deserializer>
 	void deserialize(Deserializer& adapter, value_type& x) {
 		using inner_type = typename value_type::value_type;
+		x = {};
+		std::size_t i{};
+		adapter. template deserializeSequence<inner_type>([&x, &i](inner_type v) { x[i] = std::move(v); });
+	}
+};
+
+template<typename T>
+struct SequenceContainerConverter : FixedSequenceContainerConverter<T> {
+	using value_type = FixedSequenceContainerConverter<T>::value_type;
+	template<typename Deserializer>
+	void deserialize(Deserializer& adapter, value_type& x) {
 		x.clear();
+		using inner_type = typename value_type::value_type;
 		adapter. template deserializeSequence<inner_type>([&x](inner_type v) { x.emplace_back(std::move(v)); });
 	}
 };
@@ -50,6 +63,8 @@ struct ContainerConverter {
 
 }
 
+template<typename T, std::size_t N>
+struct Converter<std::array<T, N>>       : detail::FixedSequenceContainerConverter<std::array<T, N>> {};
 template<typename... Ts>
 struct Converter<std::vector<Ts...>>       : detail::SequenceContainerConverter<std::vector<Ts...>> {};
 template<typename... Ts>
