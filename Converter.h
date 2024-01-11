@@ -31,7 +31,7 @@ struct FixedSequenceContainerConverter {
 		using inner_type = typename value_type::value_type;
 		x = {};
 		std::size_t i{};
-		adapter. template deserializeSequence<inner_type>([&x, &i](inner_type v) { x[i] = std::move(v); });
+		adapter. template deserializeSequence<inner_type>([&x, &i](inner_type v) { x[i++] = std::move(v); });
 	}
 };
 
